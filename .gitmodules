@@ -1,6 +1,6 @@
 [submodule "distro"]
 	path = distro
-	url = https://github.com/jhondge/distro.git
+	url = https://github.com/tamworth/distro.git
 	branch = upstream
 [submodule "extra/optnet"]
 	path = extra/optnet
