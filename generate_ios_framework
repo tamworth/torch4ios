@@ -5,8 +5,8 @@ XCODE_ROOT=`xcode-select -print-path`
 IPHONE_SDKVERSION=`xcodebuild -showsdks | grep iphoneos | egrep "[[:digit:]]+\.[[:digit:]]+" -o | tail -1`
 ARM_DEV_CMD="xcrun --sdk iphoneos"
 SIM_DEV_CMD="xcrun --sdk iphonesimulator"
-EXTRA_FLAGS="-miphoneos-version-min=6.0 -O2"
-
+EXTRA_FLAGS="-miphoneos-version-min=8.0 -O2"
+RESULTS_DIR=$SCRIPT_DIR/results
 
 # configuration environment variables path
 configure_exports() {
@@ -89,7 +89,7 @@ generate_arch() {
     echo "********** build success $1 ***********"
 
     cd $SCRIPT_DIR
-    
+
     mkdir -p $SCRIPT_DIR/framework/lua
     mkdir -p $SCRIPT_DIR/framework/lib/$1
     mkdir -p $SCRIPT_DIR/framework/include
@@ -99,17 +99,29 @@ generate_arch() {
     #rm -rf $SCRIPT_DIR/installed/
 
     # copy libs
-    cp $SCRIPT_DIR/installed/libluajit.a 			         $SCRIPT_DIR/framework/lib/$1/
-    cp $SCRIPT_DIR/installed/libluaT.a                  	 $SCRIPT_DIR/framework/lib/$1/
-    cp $SCRIPT_DIR/installed/libTH.a                     	 $SCRIPT_DIR/framework/lib/$1/
-    cp $SCRIPT_DIR/installed/libtorch.a                		 $SCRIPT_DIR/framework/lib/$1/
-    
-    cp $SCRIPT_DIR/installed/libTHNN.a 		                 $SCRIPT_DIR/framework/lib/$1/
-    cp $SCRIPT_DIR/installed/libpaths.a           			 $SCRIPT_DIR/framework/lib/$1/
-    cp $SCRIPT_DIR/installed/libsys.a                        $SCRIPT_DIR/framework/lib/$1/
-    cp $SCRIPT_DIR/installed/libnnx.a               		 $SCRIPT_DIR/framework/lib/$1/
-    #cp $SCRIPT_DIR/build/3rdparty/cjson/libcjson.a           $SCRIPT_DIR/framework/lib/$1
-     
+
+    cp $SCRIPT_DIR/libpng16.dylib		                     $SCRIPT_DIR/installed/libpng16.dylib
+
+    cp $SCRIPT_DIR/installed/libpng16.dylib		             $SCRIPT_DIR/framework/lib/$1/libpng16.dylib
+    cp $SCRIPT_DIR/installed/libluajit.dylib 		         $SCRIPT_DIR/framework/lib/$1/
+    cp $SCRIPT_DIR/installed/libluaT.dylib                   $SCRIPT_DIR/framework/lib/$1/
+    cp $SCRIPT_DIR/installed/libTH.dylib                     $SCRIPT_DIR/framework/lib/$1/
+    cp $SCRIPT_DIR/installed/libtorch.dylib                  $SCRIPT_DIR/framework/lib/$1/
+    cp $SCRIPT_DIR/installed/libsundown.dylib 		         $SCRIPT_DIR/framework/lib/$1/
+    cp $SCRIPT_DIR/installed/libthreadsmain.dylib 		     $SCRIPT_DIR/framework/lib/$1/
+    cp $SCRIPT_DIR/installed/libthreads.dylib 		         $SCRIPT_DIR/framework/lib/$1/
+    cp $SCRIPT_DIR/installed/libppm.dylib 		             $SCRIPT_DIR/framework/lib/$1/
+
+    cp $SCRIPT_DIR/installed/libTHNN.dylib 		             $SCRIPT_DIR/framework/lib/$1/
+    cp $SCRIPT_DIR/installed/libpaths.dylib              	 $SCRIPT_DIR/framework/lib/$1/
+    cp $SCRIPT_DIR/installed/libsys.dylib                    $SCRIPT_DIR/framework/lib/$1/
+    cp $SCRIPT_DIR/installed/libnnx.dylib                    $SCRIPT_DIR/framework/lib/$1/
+    cp $SCRIPT_DIR/installed/libimage.dylib                  $SCRIPT_DIR/framework/lib/$1/
+    # cp $SCRIPT_DIR/installed/libjpeg.a                       $SCRIPT_DIR/framework/lib/$1/
+    cp $SCRIPT_DIR/installed/libpng.dylib                    $SCRIPT_DIR/framework/lib/$1/
+    # cp $SCRIPT_DIR/installed/libpng-static.a                 $SCRIPT_DIR/framework/lib/$1/
+    cp $SCRIPT_DIR/installed/libcjson.dylib                  $SCRIPT_DIR/framework/lib/$1/
+
     LUA_INSTALL_DIR="$SCRIPT_DIR/installed/share/lua/5.1"
 
     # copy lua scripts
@@ -121,12 +133,13 @@ generate_arch() {
 
     mkdir -p $SCRIPT_DIR/framework/lua/paths
     cp -r $LUA_INSTALL_DIR/paths/*.lua $SCRIPT_DIR/framework/lua/paths/
-    #mkdir -p $SCRIPT_DIR/framework/lua/image
-    #cp -r $SCRIPT_DIR/distro/pkg/image/*.lua $SCRIPT_DIR/framework/lua/image/
+
+    mkdir -p $SCRIPT_DIR/framework/lua/image
+    cp -r $SCRIPT_DIR/distro/pkg/image/*.lua $SCRIPT_DIR/framework/lua/image/
 
     mkdir -p $SCRIPT_DIR/framework/lua/nn
     cp -r $LUA_INSTALL_DIR/nn/*.lua $SCRIPT_DIR/framework/lua/nn/
-    
+
     mkdir -p $SCRIPT_DIR/framework/lua/sys
     cp -r $LUA_INSTALL_DIR/sys/*.lua $SCRIPT_DIR/framework/lua/sys/
 
@@ -150,91 +163,161 @@ extract_archive() {
 }
 
 extract_recombine() {
-    cd $SCRIPT_DIR/framework/lib/$1
-    #extract_archive cjson
-    #extract_archive image
-    extract_archive luaT
-    extract_archive THNN
-    extract_archive sys
-    extract_archive nnx
-    extract_archive TH
-    extract_archive paths
-    extract_archive torch
-    extract_archive luajit
-    ar -qc libtorch-$1.a paths/*.o luaT/*.o THNN/*.o sys/*.o nnx/*.o TH/*.o \
-        torch/*.o luajit/*.o
+#    cd $SCRIPT_DIR/framework/lib/$1
+#    extract_archive luajit-static
+    # extract_archive cjson
+    # extract_archive image
+    # extract_archive jpeg
+    # extract_archive png
+    # extract_archive png-static
+    # extract_archive luaT
+    # extract_archive THNN
+    # extract_archive sys
+    # extract_archive nnx
+    # extract_archive TH
+    # extract_archive paths
+    # extract_archive torch
+    # extract_archive luajit
+#    ar -qc libtorch-$1.a  \
+#         luajit-static/*.o 
+        #jpeg/*.o png-static/*.o THNN/*.o png/*.o  cjson/*.o  image/*.o torch/*.o sys/*.o paths/*.o luaT/*.o TH/*.o luajit/*.o nnx/*.o \
     cd $SCRIPT_DIR
 }
 
-lipo_libs() {
-    $ARM_DEV_CMD lipo -create                          \
-    $SCRIPT_DIR/framework/lib/armv7/libtorch-armv7.a   \
-    $SCRIPT_DIR/framework/lib/armv7s/libtorch-armv7s.a   \
-    $SCRIPT_DIR/framework/lib/arm64/libtorch-arm64.a   \
-    -output $SCRIPT_DIR/framework/lib/libtorch.a
+changeDylibRefPath() {
+    local dylibpath=${RESULTS_DIR}/$2/$1.framework/$1
+    install_name_tool －change $1.dylib @rpath/../Frameworks/$2.framework/$2 $3
 }
 
-# clean previous framework files
+generate_framework() {
+
+    local frameworkpath=${RESULTS_DIR}/$2/$3.framework
+    mkdir -p ${frameworkpath}
+
+    cp $SCRIPT_DIR/installed/$1.dylib ${frameworkpath}/$3
+    cp $SCRIPT_DIR/framework/Info.plist ${frameworkpath}
+
+    /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.ploverlake.$3" ${frameworkpath}/Info.plist
+    /usr/libexec/PlistBuddy -c "Set :CFBundleName $3" ${frameworkpath}/Info.plist
+    /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable $3" ${frameworkpath}/Info.plist
+    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" ${frameworkpath}/Info.plist
+
+}
+
+updated_framework_ref()
+{
+    echo "updated_framework_ref $3/$4"
+    # Revise rpath
+    local fromname=$3
+    local toname=$4
+
+    local old_path="@rpath/${fromname}.dylib"
+    local new_path="@rpath/../Frameworks/${toname}.framework/${toname}"
+    local dy_path="${RESULTS_DIR}/$2/$1.framework/$1"
+    #echo "====="
+    #echo "${old_path}"
+    #echo "${new_path}"
+    #echo "${dy_path}"
+    #echo "====="
+    install_name_tool -change ${old_path} ${new_path} ${dy_path}
+}
+
+updated_framework() {
+
+    echo "==========updated_framework $2/$1 =================="
+
+    local dy_path="${RESULTS_DIR}/$2/$1.framework/$1"
+    install_name_tool -id "@rpath/../Frameworks/$1.framework/$1" "${dy_path}"
+
+    updated_framework_ref $1 $2 libluaT.0 luaT
+    updated_framework_ref $1 $2 libTH.0 TH
+    updated_framework_ref $1 $2 libluajit luajit
+
+    if [ $1 = libpng ]; then
+        install_name_tool -add_rpath "@rpath/../Frameworks/libpng16.framework/libpng16" "${dy_path}"
+        otool -L ${RESULTS_DIR}/$2/$1.framework/$1
+    fi
+
+
+    #    changeDylibRefPath libTH.0 libTH ${RESULTS_DIR}/$2/$1.framework/$1
+    #    changeDylibRefPath libluajit libluajit "${RESULTS_DIR}/$2/$1.framework/$1"
+    #    changeDylibRefPath libluaT.0 libluaT "${RESULTS_DIR}/$2/$1.framework/$1"
+
+    # install_name_tool -id "@rpath/$1.dylib" "$1"
+
+    # code sign
+    /usr/bin/codesign --force --sign - --timestamp=none "${dy_path}"
+
+    echo "==========updated_framework $2/$1 =================="
+}
+
+generate_framework_group() {
+    mkdir -p ${RESULTS_DIR}/$1
+    generate_framework libpng16 $1 libpng16
+    generate_framework libTHNN $1 libTHNN
+    generate_framework libtorch $1 libtorch
+    generate_framework libpaths $1 libpaths
+    generate_framework libpng $1 libpng
+    generate_framework libsys $1 libsys
+    generate_framework libimage $1 libimage
+    generate_framework libcjson $1 cjson
+    generate_framework libluajit $1 luajit
+    generate_framework libluaT $1 luaT
+    generate_framework libTH $1 TH
+    generate_framework libsundown $1 sundown
+    generate_framework libthreads $1 threads
+    generate_framework libthreadsmain $1 threadsmain
+    generate_framework libppm $1 ppm
+    generate_framework libnnx $1 nnx
+
+    updated_framework libpng16 $1
+    updated_framework libTHNN $1
+    updated_framework libtorch $1
+    updated_framework libpaths $1
+    updated_framework libpng $1
+    updated_framework libsys $1
+    updated_framework libimage $1
+    updated_framework cjson $1
+    updated_framework luajit $1
+    updated_framework luaT $1
+    updated_framework TH $1
+    updated_framework sundown $1
+    updated_framework threads $1
+    updated_framework threadsmain $1
+    updated_framework ppm $1
+    updated_framework nnx $1
+}
+
+#lipo_libs() {
+#    $ARM_DEV_CMD lipo -create                          \
+#    $SCRIPT_DIR/framework/lib/arm64/libtorch-arm64.a   \
+#    -output $SCRIPT_DIR/framework/lib/libtorch.a
+#}
+
+echo clean previous framework files
 rm -rf $SCRIPT_DIR/framework/lua
 rm -rf $SCRIPT_DIR/framework/lib
 rm -rf $SCRIPT_DIR/framework/include
 rm -rf $SCRIPT_DIR/Torch.framework
+rm -rf $RESULTS_DIR
 
 echo "generating torch"
-generate_arch armv7
-generate_arch armv7s
 generate_arch arm64
 
-echo "extracting archives and recombining"
-extract_recombine armv7
-extract_recombine armv7s
-extract_recombine arm64
+#echo "extracting archives and recombining"
+#extract_recombine arm64
 
-echo "creating universal binary"
+echo "generate frameworks"
+generate_framework_group arm64
 
-lipo_libs
+#echo "creating universal binary"
+#lipo_libs
 
-echo "creating framework"
-mkdir -p $SCRIPT_DIR/Torch.framework/Versions/A/Headers
-cp $SCRIPT_DIR/framework/lib/libtorch.a \
-    $SCRIPT_DIR/Torch.framework/Versions/A/Torch
-cp -r $SCRIPT_DIR/framework/include/* \
-    $SCRIPT_DIR/Torch.framework/Versions/A/Headers
-cp -r $SCRIPT_DIR/framework/lua \
-    $SCRIPT_DIR/Torch.framework/Versions/A/Resources
-cd $SCRIPT_DIR/Torch.framework/Versions
-ln -s A Current
-cd $SCRIPT_DIR/Torch.framework
-ln -s Versions/Current/Torch Torch
-ln -s Versions/Current/Headers Headers
-ln -s Versions/Current/Resources Resources
-
-echo "creating header files"
-HEADER=$SCRIPT_DIR/Torch.framework/Versions/A/Headers/Torch.h
-echo '#ifndef TORCH_IOS_FRAMEWORK_TORCH_H' > $HEADER
-echo '#define TORCH_IOS_FRAMEWORK_TORCH_H' >> $HEADER
-echo '#ifdef __cplusplus' >> $HEADER
-echo 'extern "C" {' >> $HEADER
-echo '#endif' >> $HEADER
-echo '#include "TH/TH.h"' >> $HEADER
-echo '#include "lua.h"' >> $HEADER
-echo '#include "luaconf.h"' >> $HEADER
-echo '#include "lauxlib.h"' >> $HEADER
-echo '#include "luaT.h"' >> $HEADER
-echo '#include "lualib.h"' >> $HEADER
-echo '#ifdef __cplusplus' >> $HEADER
-echo '}' >> $HEADER
-echo '#endif' >> $HEADER
-echo '#endif' >> $HEADER
-echo >> $HEADER
-
-cat $SCRIPT_DIR/Torch.framework/Versions/A/Headers/luaT.h | \
-    sed 's/include [<]/include "/g' | \
-    sed 's/[>]$/"/g' > \
-    $SCRIPT_DIR/Torch.framework/Versions/A/Headers/luaT-new.h
-
-mv  $SCRIPT_DIR/Torch.framework/Versions/A/Headers/luaT-new.h \
-    $SCRIPT_DIR/Torch.framework/Versions/A/Headers/luaT.h
+echo "creating headers & lua resources"
+mkdir -p $RESULTS_DIR/Headers
+mkdir -p $RESULTS_DIR/Resources
+cp -r $SCRIPT_DIR/framework/include/* $RESULTS_DIR/Headers
+cp -r $SCRIPT_DIR/framework/lua $RESULTS_DIR/Resources
 
 echo "==> exported complete framework in Torch.framework"
 echo "    in Xcode just drag Torch.framework into"
@@ -243,4 +326,3 @@ echo "    and add path to Torch.framework parent folder in"
 echo "    Build Settings > Framework Search Paths"
 echo
 echo "    Include headers with #include <Torch/Torch.h>"
-
