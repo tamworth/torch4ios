@@ -8,6 +8,6 @@
 	branch = master
 [submodule "extra/libpng"]
 	path = extra/libpng
-	url = https://github.com/tamworth/libpng
+	url = https://github.com/tamworth/libpng.git
 	branch = master
 	
