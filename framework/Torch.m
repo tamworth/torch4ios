@@ -6,33 +6,41 @@
 
 #import <dlfcn.h>
 
-static const luaL_reg lualibs[] =
-{
-    { "libtorch",       luaopen_libtorch },
-    { "libpaths",       luaopen_libpaths },
-    { "libnnx",       luaopen_libnnx },
-    { NULL,         NULL }
-};
-
 // function to open up all the Lua libraries you declared above
 static lua_State* openlualibs(lua_State *l)
 {
     luaL_openlibs(l);
-    luaopen_libtorch(l);
-    luaopen_libpaths(l);
-//    luaopen_libthnn(l);
-    luaopen_libnnx(l);
-    luaopen_libsys(l);
     
-//    const luaL_reg *lib;
-//    for (lib = lualibs; lib->func != NULL; lib++)
-//    {
-//        lua_pushcfunction(l, lib->func);
-//        lua_pushstring(l, lib->name);
-//        lua_call(l, 1, 0);
-//    }
-//    lua_pop(l, 1);
+    loadDylib(l);
     return l;
+}
+
+static void loadDylib(lua_State *L)
+{
+    //must be used with dylib! because the lua function(io.open) of THNN will be load dylib
+//    loadDylibAndName(L, "libpng16");
+    loadDylibAndName(L, "libtorch");
+    loadDylibAndName(L, "libpaths");
+    loadDylibAndName(L, "libTHNN");
+    loadDylibAndName(L, "libpng");
+    loadDylibAndName(L, "libsys");
+    loadDylibAndName(L, "libimage");
+    loadDylibAndName(L, "cjson");
+    loadDylibAndName(L, "luajit");
+    loadDylibAndName(L, "luaT");
+    loadDylibAndName(L, "TH");
+    loadDylibAndName(L, "sundown");
+    loadDylibAndName(L, "threads");
+    loadDylibAndName(L, "threadsmain");
+    loadDylibAndName(L, "ppm");
+    loadDylibAndName(L, "nnx");
+    
+    
+    lua_getglobal(L, "package");
+    lua_getfield(L, -1, "cpath");
+    NSString *packagePath = [NSString stringWithUTF8String:lua_tostring(L, -1)];
+    
+    NSLog(@"packagePath: %@\n\n", packagePath);
 }
 
 @implementation Torch
@@ -105,24 +113,25 @@ static lua_State* openlualibs(lua_State *l)
 
 - (void)initialize
 {
-  // initialize Lua stack
-  //lua_executable_dir("./lua");
-    
-  L = lua_open();
-    
-   void *address =  dlsym(RTLD_DEFAULT, "THNN_DoubleAbs_updateGradInput");
-    
-    NSLog(@"address:%p",address);
-    
-//  luaL_openlibs(L);
+    // initialize Lua stack
+    //lua_executable_dir("./lua");
+
+    L = lua_open();
+
+    //  luaL_openlibs(L);
     openlualibs(L);
 
+    void *address =  dlsym(RTLD_DEFAULT, "THNN_DoubleAbs_updateGradInput");
+
+    NSLog(@"address:%p",address);
+    
+
 //  
-  [self addLuaPackagePathForBundlePath:[[NSBundle mainBundle] resourcePath] subdirectory:nil];
+    [self addLuaPackagePathForBundlePath:[[NSBundle mainBundle] resourcePath] subdirectory:nil];
 //
     NSString *frameworkResourcesPath = [self bundleResourcesPathForFrameworkName:@"Torch.framework"];
 //
-  [self addLuaPackagePathForBundlePath:frameworkResourcesPath subdirectory:nil];
+    [self addLuaPackagePathForBundlePath:frameworkResourcesPath subdirectory:nil];
 
   
 //    luaopen_libpaths(L);
@@ -145,7 +154,7 @@ static lua_State* openlualibs(lua_State *l)
     
   // load nnx
 //  luaopen_libnnx(L);
-  [self requireFrameworkPackage:@"nnx" frameworkResourcesPath:frameworkResourcesPath];
+//  [self requireFrameworkPackage:@"nnx" frameworkResourcesPath:frameworkResourcesPath];
     
 //  // load image
 //  luaopen_libimage(L);
@@ -155,7 +164,7 @@ static lua_State* openlualibs(lua_State *l)
 //  [self requireFrameworkPackage:@"xlua" frameworkResourcesPath:frameworkResourcesPath];
   
     // load optnet
-  [self requireFrameworkPackage:@"optnet" frameworkResourcesPath:frameworkResourcesPath];
+//  [self requireFrameworkPackage:@"optnet" frameworkResourcesPath:frameworkResourcesPath];
 
   
 
