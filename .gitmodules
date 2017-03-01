@@ -6,3 +6,8 @@
 	path = extra/optnet
 	url = https://github.com/fmassa/optimize-net.git
 	branch = master
+[submodule "extra/libpng"]
+	path = extra/libpng
+	url = https://github.com/tamworth/libpng
+	branch = master
+	
