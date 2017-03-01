@@ -1,7 +1,7 @@
 [submodule "distro"]
 	path = distro
 	url = https://github.com/tamworth/distro.git
-	branch = upstream
+	branch = for-ios
 [submodule "extra/optnet"]
 	path = extra/optnet
 	url = https://github.com/fmassa/optimize-net.git
